@@ -10,8 +10,12 @@ const options = {
         "A lightweight RESTful API for managing car inventory data.",
       license: { name: "MIT", url: "https://opensource.org/licenses/MIT" },
     },
-    servers: [{ url: "http://127.0.0.1:3000" }],
-    tags: [{ name: "Cars", description: "Car inventory operations" }],
+    // relative, so "Try it out" calls the host and port the docs were loaded from
+    servers: [{ url: "/" }],
+    tags: [
+      { name: "Cars", description: "Car inventory operations" },
+      { name: "Health", description: "Whether the API can serve requests" },
+    ],
     // the API has no authentication
     security: [],
   },

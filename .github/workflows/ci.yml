@@ -38,3 +38,17 @@ jobs:
       - run: npm ci
       - run: npm run check:migrations
       - run: npm run check
+
+  # builds the Docker image and checks that it starts and answers
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # waits until the api health check passes (db and migrate start first)
+      - run: docker compose up --detach --build --wait api
+      - run: curl --fail --silent --show-error http://localhost:3000/health
+      - run: curl --fail --silent --show-error http://localhost:3000/api/cars
+      - if: failure()
+        run: docker compose logs
+      - if: always()
+        run: docker compose down --volumes

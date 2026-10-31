@@ -11,6 +11,9 @@ function createCarsStore(initialCars = []) {
   let nextId = cars.reduce((max, car) => Math.max(max, car.id), 0) + 1;
 
   return {
+    // the cars are in memory, so they are always reachable
+    async ping() {},
+
     async list() {
       return cars;
     },

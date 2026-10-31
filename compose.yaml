@@ -1,0 +1,56 @@
+# Runs the API from its Docker image, with its own Postgres:
+#   docker compose up --build    then open http://localhost:3000/api-docs
+#   docker compose down -v       stops everything and deletes the data
+# This database is separate from the Codespace's development database.
+services:
+  db:
+    image: postgres:18
+    environment:
+      # local-only database, so this password is not a secret
+      POSTGRES_USER: cars
+      POSTGRES_PASSWORD: cars
+      POSTGRES_DB: cars
+    volumes:
+      # Postgres 18 images keep their data below /var/lib/postgresql
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U cars -d cars"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  # runs once: brings the schema up to date and adds the example cars to an empty table
+  migrate:
+    build: .
+    image: cars-api
+    command: ["sh", "-c", "node scripts/migrate.js && node scripts/seed.js"]
+    environment:
+      DATABASE_URL: postgres://cars:cars@db:5432/cars
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build: .
+    image: cars-api
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://cars:cars@db:5432/cars
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      # the slim image has no curl, so ask /health with Node itself
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/health').then((res) => process.exit(res.ok ? 0 : 1), () => process.exit(1))"
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  db-data:

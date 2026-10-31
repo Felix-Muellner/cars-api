@@ -10,11 +10,14 @@ OpenAPI schemas and examples, and the README.
 - **CarInput**: what a client sends to create or replace a car:
   `make`, `model`, `year`. Never includes `id`.
 - **Error**: every 4xx response body is `{ "message": string }`,
-  plus `errors: string[]` for validation failures. Every 5xx body is
-  `{ "message": "Internal server error" }`, never a stack trace.
+  plus `errors: string[]` for validation failures. A 5xx body is
+  `{ "message": "Service unavailable" }` (503, the database is
+  unreachable) or `{ "message": "Internal server error" }` (500,
+  anything else), never a stack trace.
 - **Store**: the object that keeps cars. Routes talk to it only
-  through list, get, create, update, remove, which all return
-  Promises. Two implementations with the same behavior:
+  through ping, list, get, create, update, remove, which all return
+  Promises. `ping` resolves when the store can reach its data
+  (`GET /health` uses it). Two implementations with the same behavior:
   - in-memory (`createCarsStore` in `src/carsStore.js`): the default
     for `createApp()`, used by the route tests, seeded with two cars;
   - Postgres (`createPgCarsStore` in `src/pgCarsStore.js`): used by
@@ -45,7 +48,8 @@ OpenAPI schemas and examples, and the README.
 - `GET /api/cars` lists cars ordered by id.
 - Ids are never reused and may have gaps (Postgres also uses up an id
   when an insert fails). Never assume ids are consecutive.
-- The server listens on 127.0.0.1:3000 (hard-coded until Phase 4).
+- The server listens on `HOST`:`PORT` (default 127.0.0.1:3000, see
+  `src/config.js`). An invalid PORT stops it with a clear message.
 
 ### Database
 
@@ -64,18 +68,34 @@ OpenAPI schemas and examples, and the README.
 - The app never migrates the database itself. At startup it exits
   with a clear message if `DATABASE_URL` is not set, the database is
   unreachable, or the cars table is missing ("Run npm run migrate.").
-- If the database fails during a request, the response is 500
-  "Internal server error" (after at most a 5 second connection
+- If the database is unreachable during a request, the response is 503
+  "Service unavailable" (after at most a 5 second connection
   timeout); the app keeps running and recovers when the database is
-  back.
+  back. The Postgres store turns connection failures into a
+  `DatabaseUnavailableError` (`src/errors.js`); other database errors
+  stay 500.
 - Seed data goes only into the development database, only when its
   cars table is empty (`npm run db:seed`), and never in a migration.
 - All tests that use Postgres live in `test/pgCarsStore.test.js`,
   because `node --test` runs test files in parallel.
 
-## Later phases
+## Phase 4 decisions
 
-- Phase 4: HOST/PORT from the environment, a health check endpoint,
-  503 for database outages and a review of 5xx status codes.
-- Phase 6: cloud database with real secrets and TLS to the database;
-  HTTPS terminated by the platform.
+- HOST and PORT come from the environment, defaulting to `127.0.0.1`
+  and `3000`. The Docker image sets `HOST=0.0.0.0`, because inside a
+  container 127.0.0.1 is unreachable from outside.
+- `GET /health` returns 200 `{ "status": "ok" }` when the store can
+  reach its data, and 503 `{ "message": "Service unavailable" }` when
+  it cannot.
+- If the database is unreachable during a request, the response is 503
+  `{ "message": "Service unavailable" }`. Any other unexpected error
+  stays 500 "Internal server error".
+- `docker compose up` runs migrations and seeding as a one-off
+  `migrate` service before the API starts; the API itself still never
+  migrates.
+
+## Out of scope
+
+Continuous delivery and cloud deployment (the former Phases 5 and 6)
+are not part of this project. The API has no authentication, so it
+must not be exposed publicly for long.

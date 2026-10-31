@@ -9,8 +9,9 @@ Developer setup details: docs/development.md.
 
 ## Commands
 
-- `npm start`: run the API on http://127.0.0.1:3000 with the Postgres
-  store (needs `DATABASE_URL` and a migrated database)
+- `npm start`: run the API on http://127.0.0.1:3000 (`HOST`/`PORT`
+  change it) with the Postgres store (needs `DATABASE_URL` and a
+  migrated database)
 - `npm test`: run the tests (`node --test`, with node:test + supertest).
   Put tests in test/*.test.js; tests that need Postgres go in
   test/pgCarsStore.test.js (needs `TEST_DATABASE_URL`)
@@ -21,6 +22,9 @@ Developer setup details: docs/development.md.
 - `npm run check`: lint + spec lint + tests
 - `npm run check:migrations`: fail if a migration already on `main`
   was changed (CI runs it on every PR)
+- `docker compose up --build`: build the image and run it with its own
+  Postgres (migrates and seeds first); `docker compose down -v` removes
+  it. CI's `container` job checks /health and /api/cars this way
 
 ## Code layout
 
@@ -28,9 +32,12 @@ Developer setup details: docs/development.md.
   annotations
 - `src/openapi.js`: builds the OpenAPI spec from app.js; served at
   /api-docs (Swagger UI) and /api-docs.json
-- `src/carsStore.js`: in-memory store (list/get/create/update/remove),
+- `src/carsStore.js`: in-memory store (ping/list/get/create/update/remove),
   the default for createApp() and the route tests
-- `src/pgCarsStore.js`: Postgres store with the same interface
+- `src/pgCarsStore.js`: Postgres store with the same interface; turns
+  connection failures into `DatabaseUnavailableError` (503)
+- `src/errors.js`: `DatabaseUnavailableError`
+- `src/config.js`: reads `HOST` and `PORT`
 - `src/database.js`: creates the pg pool and checks the database at
   startup
 - `src/migrate.js`, `src/seed.js`: run migrations, add the example cars
@@ -41,6 +48,9 @@ Developer setup details: docs/development.md.
   `migrate`, `db:seed` and `check:migrations`
 - `test/storeContract.js`: tests every store must pass
 - `.devcontainer/`: Docker Compose with the workspace and Postgres
+  (Docker is available inside the workspace)
+- `Dockerfile`, `.dockerignore`, `compose.yaml`: the app image and how
+  to run it with Postgres
 
 ## Workflow Guidelines
 

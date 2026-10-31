@@ -11,7 +11,7 @@ describe("GET /api-docs.json", () => {
     assert.equal(res.body.openapi, "3.0.0");
   });
 
-  test("documents every car operation with an operationId", async () => {
+  test("documents every operation with an operationId", async () => {
     const res = await request(createApp()).get("/api-docs.json");
 
     const operations = Object.entries(res.body.paths).flatMap(([path, methods]) =>
@@ -23,7 +23,20 @@ describe("GET /api-docs.json", () => {
       "GET /api/cars/{id}": "getCar",
       "PUT /api/cars/{id}": "replaceCar",
       "DELETE /api/cars/{id}": "deleteCar",
+      "GET /health": "getHealth",
     });
+  });
+});
+
+describe("5xx responses", () => {
+  test("every car operation documents 500 and 503", async () => {
+    const res = await request(createApp()).get("/api-docs.json");
+
+    for (const [path, methods] of Object.entries(res.body.paths).filter(([path]) => path.startsWith("/api/cars"))) {
+      for (const [method, op] of Object.entries(methods)) {
+        assert.ok(op.responses["500"] && op.responses["503"], `${method.toUpperCase()} ${path}`);
+      }
+    }
   });
 });
 
