@@ -73,9 +73,23 @@ OpenAPI schemas and examples, and the README.
 - All tests that use Postgres live in `test/pgCarsStore.test.js`,
   because `node --test` runs test files in parallel.
 
-## Later phases
+## Phase 4 decisions
 
-- Phase 4: HOST/PORT from the environment, a health check endpoint,
-  503 for database outages and a review of 5xx status codes.
-- Phase 6: cloud database with real secrets and TLS to the database;
-  HTTPS terminated by the platform.
+- HOST and PORT come from the environment, defaulting to `127.0.0.1`
+  and `3000`. The Docker image sets `HOST=0.0.0.0`, because inside a
+  container 127.0.0.1 is unreachable from outside.
+- `GET /health` returns 200 `{ "status": "ok" }` when the store can
+  reach its data, and 503 `{ "message": "Service unavailable" }` when
+  it cannot.
+- If the database is unreachable during a request, the response is 503
+  `{ "message": "Service unavailable" }`. Any other unexpected error
+  stays 500 "Internal server error".
+- `docker compose up` runs migrations and seeding as a one-off
+  `migrate` service before the API starts; the API itself still never
+  migrates.
+
+## Out of scope
+
+Continuous delivery and cloud deployment (the former Phases 5 and 6)
+are not part of this project. The API has no authentication, so it
+must not be exposed publicly for long.

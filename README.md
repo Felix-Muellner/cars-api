@@ -16,14 +16,17 @@ This project serves as a foundational backend project to practice core web API d
   Define and document all endpoints using the OpenAPI Specification (OAS).
 - [x] **Phase 3: Database Persistence**  
   Persist cars in PostgreSQL 18 with SQL migrations (node-pg-migrate), database constraints and a 100-character limit on make and model. Postgres runs as a Compose service in the devcontainer and as a service container in CI.
-- [ ] **Phase 4: Containerization**  
-  Containerize the application and database using Docker and Docker Compose, with HOST/PORT from the environment, a health check endpoint and 503 responses when the database is down.
-- [ ] **Phase 5: Continuous Delivery**  
-  Build and publish the container image and deploy automatically from GitHub Actions. *(CI, meaning lint and tests on every PR, was delivered in Phase 1.5.)*
-- [ ] **Phase 6: Cloud Deployment**  
-  Deploy the containerized service to a cloud provider, with a managed database, secrets and TLS.
+- [ ] **Phase 4: Container**  
+  Make the API ready to run anywhere: HOST/PORT from the environment, a health check endpoint and 503 responses when the database is down. Package it as a Docker image that starts together with Postgres via `docker compose up` and is built and tested in CI. This is the last phase of the project.
 
 Phases are numbered by topic, not by the order in which they are completed.
+
+### Possible next steps (not part of this project)
+
+- **Continuous Delivery:** publish the container image and deploy it automatically from GitHub Actions. *(CI, meaning lint and tests on every PR, was delivered in Phase 1.5.)*
+- **Cloud Deployment:** run the container at a cloud provider, with a managed database, secrets and TLS.
+
+These are left out on purpose: a live service costs money and needs ongoing care (updates, security, protecting the write endpoints from strangers). The project ends with a free, runnable container instead.
 
 ---
 
