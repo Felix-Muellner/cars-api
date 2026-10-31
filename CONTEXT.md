@@ -45,7 +45,8 @@ OpenAPI schemas and examples, and the README.
 - `GET /api/cars` lists cars ordered by id.
 - Ids are never reused and may have gaps (Postgres also uses up an id
   when an insert fails). Never assume ids are consecutive.
-- The server listens on 127.0.0.1:3000 (hard-coded until Phase 4).
+- The server listens on `HOST`:`PORT` (default 127.0.0.1:3000, see
+  `src/config.js`). An invalid PORT stops it with a clear message.
 
 ### Database
 
