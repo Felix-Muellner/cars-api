@@ -27,12 +27,15 @@ empty database (which the start-up commands migrate and seed again).
 | :--- | :--- | :--- |
 | `DATABASE_URL` | `npm start`, `npm run migrate`, `npm run db:seed` | `postgres://cars:cars@postgres:5432/cars` |
 | `TEST_DATABASE_URL` | `npm test` | `postgres://cars:cars@postgres:5432/cars_test` |
+| `HOST` | `npm start` | not set (default `127.0.0.1`) |
+| `PORT` | `npm start` | not set (default `3000`) |
 
 The Codespace and CI set them for you. Elsewhere, copy
 [`.env.example`](../.env.example) to `.env` (git-ignored) and adjust it;
 the npm scripts load `.env` if it exists, and variables that are already set
 win over it. The password `cars` is not a secret: these databases are local
-and thrown away. Real secrets come with the cloud deployment (Phase 6).
+and thrown away. The project has no real secrets, because it is never
+deployed.
 
 ## The database
 
@@ -72,7 +75,8 @@ returns 404 until the database is recreated.
 
 | File | What it tests | Needs Postgres |
 | :--- | :--- | :--- |
-| `test/cars.test.js`, `test/openapi.test.js` | HTTP routes, validation, errors, API docs, with the in-memory store | no |
+| `test/cars.test.js`, `test/openapi.test.js` | HTTP routes, validation, errors, `/health`, API docs, with the in-memory store | no |
+| `test/config.test.js` | reading `HOST` and `PORT` | no |
 | `test/carsStore.test.js` | the store contract (`test/storeContract.js`) against the in-memory store | no |
 | `test/pgCarsStore.test.js` | the store contract against Postgres, the table constraints, startup checks, seeding, and the app end to end | yes |
 
@@ -102,6 +106,61 @@ npm run db:seed
 npm start
 ```
 
+## Running the API in a container
+
+### Image and container, in short
+
+- An **image** is a packaged copy of the app: Node.js 24, the code and the
+  npm packages it needs, built from the recipe in
+  [`Dockerfile`](../Dockerfile). It never changes once built.
+- A **container** is a running copy of an image. You can start several
+  containers from one image, stop them, and throw them away.
+- **Docker** builds images and runs containers. **Docker Compose** starts
+  several containers that belong together, described in
+  [`compose.yaml`](../compose.yaml).
+
+Packing the app this way means it runs the same everywhere: in the
+Codespace, in CI, or on a server. Hosting companies usually expect an image.
+
+### What `docker compose up --build` does
+
+1. Builds the `cars-api` image from the `Dockerfile` (production packages
+   only, runs as the unprivileged `node` user, listens on `0.0.0.0:3000`).
+2. Starts `db`, a fresh PostgreSQL 18 with its own data volume (separate
+   from the Codespace's `cars` database).
+3. When `db` is healthy, runs `migrate` once: it applies the migrations and
+   adds the two example cars to an empty table, then exits.
+4. Starts `api` and checks `/health` every 5 seconds.
+
+Useful commands:
+
+```bash
+docker compose up --build -d   # start in the background
+docker compose ps              # see the containers and whether api is healthy
+docker compose logs api        # see what the API printed
+docker compose stop db         # try an outage: /health and /api/cars now answer 503
+docker compose start db        # and back to 200
+docker compose down -v         # stop everything and delete the data
+```
+
+CI runs the same `compose.yaml` on every pull request and checks `/health`
+and `/api/cars` (the `container` job in
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml)).
+
+Docker in the Codespace comes from the `docker-in-docker` feature in
+`.devcontainer/devcontainer.json`. If `docker` is not found, rebuild the
+Codespace.
+
+### Showing the API to someone (briefly)
+
+The Codespace can share port 3000 with a public https link: in VS Code open
+the **Ports** tab, right-click port 3000 and choose **Port Visibility →
+Public**, then copy the forwarded address and add `/api-docs`. The link works
+only while the Codespace runs.
+
+The API has no login, so **anyone with the link can add, change and delete
+cars**. Share it only briefly and set the port back to Private afterwards.
+
 ## Troubleshooting
 
 | Message | What to do |
@@ -109,4 +168,7 @@ npm start
 | `DATABASE_URL is not set` | Outside the Codespace: create `.env` from `.env.example`. |
 | `Cannot connect to the database at …` / `Cannot reach Postgres at …` | Postgres is not running or not reachable. In the Codespace, rebuild the container; in CI, check the `postgres` service. |
 | `The cars table does not exist. Run npm run migrate.` | Run `npm run migrate`. |
+| `PORT must be a whole number from 1 to 65535` | Fix or unset `PORT`. |
+| `EADDRINUSE` / port 3000 is already allocated | Something else uses port 3000, e.g. `npm start` and `docker compose up` at the same time. Stop one, or start `npm start` with another `PORT`. |
+| `docker: command not found` | Rebuild the Codespace, so the Docker feature is installed. |
 | `Not run migration … is preceding already run migration …` | A new migration has an older timestamp than one that already ran. Create it again with `npx node-pg-migrate create`. |

@@ -16,10 +16,12 @@ This project serves as a foundational backend project to practice core web API d
   Define and document all endpoints using the OpenAPI Specification (OAS).
 - [x] **Phase 3: Database Persistence**  
   Persist cars in PostgreSQL 18 with SQL migrations (node-pg-migrate), database constraints and a 100-character limit on make and model. Postgres runs as a Compose service in the devcontainer and as a service container in CI.
-- [ ] **Phase 4: Container**  
+- [x] **Phase 4: Container**  
   Make the API ready to run anywhere: HOST/PORT from the environment, a health check endpoint and 503 responses when the database is down. Package it as a Docker image that starts together with Postgres via `docker compose up` and is built and tested in CI. This is the last phase of the project.
 
 Phases are numbered by topic, not by the order in which they are completed.
+
+**Project status: complete.** All planned phases are done.
 
 ### Possible next steps (not part of this project)
 
@@ -38,9 +40,10 @@ These are left out on purpose: a live service costs money and needs ongoing care
 * **API Documentation:** OpenAPI 3.0 via swagger-jsdoc, Swagger UI at `/api-docs`
 * **Testing:** node:test + supertest
 * **Linting:** ESLint, Redocly CLI (OpenAPI spec)
-* **CI:** GitHub Actions with a Postgres service container (`npm run check` on every push and PR)
+* **CI:** GitHub Actions with a Postgres service container (`npm run check` on every push and PR) and a job that builds the Docker image and checks that it starts
+* **Container:** Docker image (`Dockerfile`), started with its own Postgres by Docker Compose (`compose.yaml`)
 * **Database:** PostgreSQL 18, via [pg](https://node-postgres.com/) with SQL migrations ([node-pg-migrate](https://salsita.github.io/node-pg-migrate/))
-* **Dev Environment:** GitHub Codespace with Docker Compose (workspace + Postgres)
+* **Dev Environment:** GitHub Codespace with Docker Compose (workspace + Postgres), with Docker available inside it
 * **Code Editor:** Visual Studio Code
 * **API Testing:** Swagger UI ("Try it out" at `/api-docs`, with example requests for each endpoint)
 * **Version Control:** Git, GitHub
@@ -85,7 +88,20 @@ npm start
 
 The API runs at `http://127.0.0.1:3000`. Interactive API docs (Swagger UI) are at `http://127.0.0.1:3000/api-docs`. Use "Try it out" and pick a named example to send a request. The raw OpenAPI spec is at `/api-docs.json`.
 
+`HOST` and `PORT` change where it listens (defaults `127.0.0.1` and `3000`). `GET /health` tells you whether the API can reach its database.
+
 To run it on your own machine (Node.js 24 and PostgreSQL 18), see the [development guide](docs/development.md#running-outside-the-codespace).
+
+### Run with Docker
+
+The API also comes as a Docker image: a packaged copy of the app with Node.js and everything it needs, so it runs the same on any computer with Docker. One command builds it and starts it together with its own Postgres:
+
+```bash
+docker compose up --build    # then open http://localhost:3000/api-docs
+docker compose down -v       # stop it and delete its data
+```
+
+Stop `npm start` first, because both use port 3000. The [development guide](docs/development.md#running-the-api-in-a-container) explains how this works.
 
 ### Commands
 
@@ -95,6 +111,7 @@ npm test          # run the tests (the Postgres tests need TEST_DATABASE_URL)
 npm run migrate   # apply new database migrations
 npm run db:seed   # add the two example cars to an empty database
 npm run check     # lint + spec lint + tests (CI runs this and check:migrations)
+docker compose up --build   # run the API and Postgres in containers
 ```
 
-The [development guide](docs/development.md) covers environment variables, migrations, the test layout and troubleshooting.
+The [development guide](docs/development.md) covers environment variables, migrations, the test layout, containers and troubleshooting.
