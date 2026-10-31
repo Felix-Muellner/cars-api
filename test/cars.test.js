@@ -2,6 +2,7 @@ const { test, describe } = require("node:test");
 const assert = require("node:assert/strict");
 const request = require("supertest");
 const { createApp } = require("../src/app");
+const { DatabaseUnavailableError } = require("../src/errors");
 
 const validCar = { make: "Ford", model: "Mustang", year: 2022 };
 
@@ -219,6 +220,18 @@ describe("error responses", () => {
 
     assert.equal(res.status, 500);
     assert.deepEqual(res.body, { message: "Internal server error" });
+  });
+
+  test("returns 503 when the store says the database is unavailable", async () => {
+    const store = {
+      async list() {
+        throw new DatabaseUnavailableError(new Error("connect ECONNREFUSED"));
+      },
+    };
+    const res = await request(createApp({ store })).get("/api/cars");
+
+    assert.equal(res.status, 503);
+    assert.deepEqual(res.body, { message: "Service unavailable" });
   });
 
   test("returns 500 with a JSON body when the store rejects", async () => {

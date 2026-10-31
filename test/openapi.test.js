@@ -28,6 +28,18 @@ describe("GET /api-docs.json", () => {
   });
 });
 
+describe("5xx responses", () => {
+  test("every car operation documents 500 and 503", async () => {
+    const res = await request(createApp()).get("/api-docs.json");
+
+    for (const [path, methods] of Object.entries(res.body.paths).filter(([path]) => path.startsWith("/api/cars"))) {
+      for (const [method, op] of Object.entries(methods)) {
+        assert.ok(op.responses["500"] && op.responses["503"], `${method.toUpperCase()} ${path}`);
+      }
+    }
+  });
+});
+
 describe("request examples", () => {
   test("the ModelTooLong example is rejected for its length", async () => {
     const res = await request(createApp()).get("/api-docs.json");

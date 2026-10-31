@@ -71,7 +71,7 @@ Because the environment is ephemeral and fully described by the devcontainer, ev
 
 A car is `{ id, make, model, year }`. `make` and `model` must be non-empty and at most 100 characters (after trimming spaces), and `year` must be a whole number from 1886 to next year. Ids are assigned by the server, never reused, and may have gaps. Cars are stored in PostgreSQL and survive restarts.
 
-Every error response has a JSON body `{ "message": string }`. Validation failures also include `errors: string[]`. A body that is not valid JSON returns `400` with `"Invalid JSON"`, an unknown route returns `404` with `"Not found"`, and an unexpected server error returns `500` with `"Internal server error"`, without a stack trace.
+Every error response has a JSON body `{ "message": string }`. Validation failures also include `errors: string[]`. A body that is not valid JSON returns `400` with `"Invalid JSON"`, an unknown route returns `404` with `"Not found"`, an unreachable database returns `503` with `"Service unavailable"` (try again later), and any other unexpected server error returns `500` with `"Internal server error"`, without a stack trace.
 
 ## ⚙️ Getting Started
 

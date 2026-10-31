@@ -3,6 +3,7 @@ const swaggerUi = require("swagger-ui-express");
 const openapiSpec = require("./openapi");
 const { createCarsStore, seedCars } = require("./carsStore");
 const { validateCarInput, parseCarId } = require("./validation");
+const { DatabaseUnavailableError } = require("./errors");
 
 function createApp({ store = createCarsStore(seedCars) } = {}) {
   const app = express();
@@ -200,6 +201,8 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *                 $ref: '#/components/schemas/Car'
    *       500:
    *         $ref: '#/components/responses/InternalError'
+   *       503:
+   *         $ref: '#/components/responses/ServiceUnavailable'
    */
   app.get('/api/cars', async (req, res) => {
     res.status(200).json(await store.list());
@@ -227,6 +230,8 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *         $ref: '#/components/responses/CarNotFound'
    *       500:
    *         $ref: '#/components/responses/InternalError'
+   *       503:
+   *         $ref: '#/components/responses/ServiceUnavailable'
    */
   app.get('/api/cars/:id', async (req, res) => {
       const carId = parseCarId(req.params.id);
@@ -278,6 +283,8 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *         $ref: '#/components/responses/InvalidCar'
    *       500:
    *         $ref: '#/components/responses/InternalError'
+   *       503:
+   *         $ref: '#/components/responses/ServiceUnavailable'
    */
   app.post('/api/cars', async (req, res) => {
       const { car, errors } = validateCarInput(req.body);
@@ -346,6 +353,8 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *               message: Car not found
    *       500:
    *         $ref: '#/components/responses/InternalError'
+   *       503:
+   *         $ref: '#/components/responses/ServiceUnavailable'
    */
   app.put('/api/cars/:id', async (req, res) => {
       const carId = parseCarId(req.params.id);
@@ -389,6 +398,8 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *         $ref: '#/components/responses/CarNotFound'
    *       500:
    *         $ref: '#/components/responses/InternalError'
+   *       503:
+   *         $ref: '#/components/responses/ServiceUnavailable'
    */
   app.delete('/api/cars/:id', async (req, res) => {
       const carId = parseCarId(req.params.id);
@@ -448,6 +459,11 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
       // client errors raised by express.json(), e.g. 413 payload too large
       if (err.status >= 400 && err.status < 500) {
           return res.status(err.status).json({ message: err.message });
+      }
+
+      if (err instanceof DatabaseUnavailableError) {
+          console.error(`${err.message}: ${err.cause?.message}`);
+          return res.status(503).json({ message: "Service unavailable" });
       }
 
       console.error(err);

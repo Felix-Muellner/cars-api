@@ -10,8 +10,10 @@ OpenAPI schemas and examples, and the README.
 - **CarInput**: what a client sends to create or replace a car:
   `make`, `model`, `year`. Never includes `id`.
 - **Error**: every 4xx response body is `{ "message": string }`,
-  plus `errors: string[]` for validation failures. Every 5xx body is
-  `{ "message": "Internal server error" }`, never a stack trace.
+  plus `errors: string[]` for validation failures. A 5xx body is
+  `{ "message": "Service unavailable" }` (503, the database is
+  unreachable) or `{ "message": "Internal server error" }` (500,
+  anything else), never a stack trace.
 - **Store**: the object that keeps cars. Routes talk to it only
   through ping, list, get, create, update, remove, which all return
   Promises. `ping` resolves when the store can reach its data
@@ -66,10 +68,12 @@ OpenAPI schemas and examples, and the README.
 - The app never migrates the database itself. At startup it exits
   with a clear message if `DATABASE_URL` is not set, the database is
   unreachable, or the cars table is missing ("Run npm run migrate.").
-- If the database fails during a request, the response is 500
-  "Internal server error" (after at most a 5 second connection
+- If the database is unreachable during a request, the response is 503
+  "Service unavailable" (after at most a 5 second connection
   timeout); the app keeps running and recovers when the database is
-  back.
+  back. The Postgres store turns connection failures into a
+  `DatabaseUnavailableError` (`src/errors.js`); other database errors
+  stay 500.
 - Seed data goes only into the development database, only when its
   cars table is empty (`npm run db:seed`), and never in a migration.
 - All tests that use Postgres live in `test/pgCarsStore.test.js`,
