@@ -67,6 +67,7 @@ Because the environment is ephemeral and fully described by the devcontainer, ev
 | `POST` | `/api/cars` | Add a new car | `201 Created` / `400 Bad Request` |
 | `PUT` | `/api/cars/:id` | Update an existing car | `200 OK` / `400 Bad Request` / `404 Not Found` |
 | `DELETE` | `/api/cars/:id` | Remove a car by ID | `204 No Content` / `400 Bad Request` / `404 Not Found` |
+| `GET` | `/health` | Check that the API can reach its database | `200 OK` / `503 Service Unavailable` |
 
 A car is `{ id, make, model, year }`. `make` and `model` must be non-empty and at most 100 characters (after trimming spaces), and `year` must be a whole number from 1886 to next year. Ids are assigned by the server, never reused, and may have gaps. Cars are stored in PostgreSQL and survive restarts.
 

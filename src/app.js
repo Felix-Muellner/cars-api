@@ -69,6 +69,12 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *           minimum: 1886
    *           description: From 1886 to next year
    *           example: 2022
+   *     Health:
+   *       type: object
+   *       properties:
+   *         status:
+   *           type: string
+   *           example: ok
    *     Error:
    *       type: object
    *       properties:
@@ -158,6 +164,14 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *             $ref: '#/components/schemas/Error'
    *           example:
    *             message: Car not found
+   *     ServiceUnavailable:
+   *       description: The database is unreachable; try again later
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/Error'
+   *           example:
+   *             message: Service unavailable
    *     InternalError:
    *       description: Unexpected server error
    *       content:
@@ -388,6 +402,36 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
 
       res.status(204).send();
   })
+
+  /**
+   * @openapi
+   * /health:
+   *   get:
+   *     tags: [Health]
+   *     operationId: getHealth
+   *     summary: Check that the API can reach its database
+   *     responses:
+   *       200:
+   *         description: The API can serve requests
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Health'
+   *             example:
+   *               status: ok
+   *       503:
+   *         $ref: '#/components/responses/ServiceUnavailable'
+   */
+  app.get("/health", async (req, res) => {
+      try {
+          await store.ping();
+      } catch (err) {
+          console.error("Health check failed:", err.message);
+          return res.status(503).json({ message: "Service unavailable" });
+      }
+
+      res.status(200).json({ status: "ok" });
+  });
 
   app.use((req, res) => {
       res.status(404).json({ message: "Not found" });

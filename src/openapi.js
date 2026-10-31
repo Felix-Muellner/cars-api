@@ -12,7 +12,10 @@ const options = {
     },
     // relative, so "Try it out" calls the host and port the docs were loaded from
     servers: [{ url: "/" }],
-    tags: [{ name: "Cars", description: "Car inventory operations" }],
+    tags: [
+      { name: "Cars", description: "Car inventory operations" },
+      { name: "Health", description: "Whether the API can serve requests" },
+    ],
     // the API has no authentication
     security: [],
   },

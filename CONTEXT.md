@@ -13,8 +13,9 @@ OpenAPI schemas and examples, and the README.
   plus `errors: string[]` for validation failures. Every 5xx body is
   `{ "message": "Internal server error" }`, never a stack trace.
 - **Store**: the object that keeps cars. Routes talk to it only
-  through list, get, create, update, remove, which all return
-  Promises. Two implementations with the same behavior:
+  through ping, list, get, create, update, remove, which all return
+  Promises. `ping` resolves when the store can reach its data
+  (`GET /health` uses it). Two implementations with the same behavior:
   - in-memory (`createCarsStore` in `src/carsStore.js`): the default
     for `createApp()`, used by the route tests, seeded with two cars;
   - Postgres (`createPgCarsStore` in `src/pgCarsStore.js`): used by

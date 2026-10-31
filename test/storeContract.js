@@ -69,6 +69,12 @@ function storeContract(name, makeStore) {
       assert.ok(created.id > removed.id);
     });
 
+    test("ping resolves when the store can reach its data", async () => {
+      const store = await makeStore();
+
+      await store.ping();
+    });
+
     test("list returns all cars ordered by id", async () => {
       const store = await makeStore();
       const first = await store.create(ford);

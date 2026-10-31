@@ -255,3 +255,24 @@ describe("DELETE /api/cars/:id", () => {
     assert.deepEqual(res.body, { message: "Car not found" });
   });
 });
+
+describe("GET /health", () => {
+  test("returns 200 when the store can reach its data", async () => {
+    const res = await request(createApp()).get("/health");
+
+    assert.equal(res.status, 200);
+    assert.deepEqual(res.body, { status: "ok" });
+  });
+
+  test("returns 503 when the store cannot reach its data", async () => {
+    const store = {
+      async ping() {
+        throw new Error("database down");
+      },
+    };
+    const res = await request(createApp({ store })).get("/health");
+
+    assert.equal(res.status, 503);
+    assert.deepEqual(res.body, { message: "Service unavailable" });
+  });
+});

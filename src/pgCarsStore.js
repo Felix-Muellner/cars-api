@@ -4,6 +4,10 @@ const COLUMNS = "id, make, model, year";
 
 function createPgCarsStore(pool) {
   return {
+    async ping() {
+      await pool.query("SELECT 1");
+    },
+
     async list() {
       const { rows } = await pool.query(`SELECT ${COLUMNS} FROM cars ORDER BY id`);
       return rows;
