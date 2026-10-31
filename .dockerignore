@@ -1,0 +1,11 @@
+# keep the image small and free of local files and secrets
+node_modules
+.git
+.github
+.devcontainer
+.env
+.env.*
+test
+docs
+openapi.json
+*.md

@@ -24,6 +24,14 @@ updates:
       actions:
         patterns: ["*"]
 
+  # the node base image in the Dockerfile
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+
   - package-ecosystem: devcontainers
     directory: /
     schedule:
