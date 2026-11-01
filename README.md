@@ -21,7 +21,7 @@ This project serves as a foundational backend project to practice core web API d
 
 Phases are numbered by topic, not by the order in which they are completed.
 
-**Project status: complete.** All planned phases are done.
+**Project status: in final review.** All planned phases are done. Before closing the project, I'm auditing the code, tests and CI to make sure I understand and own every part.
 
 ### Possible next steps (not part of this project)
 
