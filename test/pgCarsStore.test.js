@@ -11,6 +11,7 @@ const { createPool, checkDatabase, describeUrl } = require("../src/database");
 const { migrate } = require("../src/migrate");
 const { seed } = require("../src/seed");
 const { createPgCarsStore } = require("../src/pgCarsStore");
+const { DatabaseUnavailableError } = require("../src/errors");
 const { storeContract } = require("./storeContract");
 
 // returns a pool for databaseUrl, or rejects with one clear message
@@ -81,15 +82,66 @@ test("a pool logs errors of idle connections instead of crashing the app", () =>
   return pool.end();
 });
 
-test("a request gives 500 when the database is unreachable", async () => {
-  const pool = createPool("postgres://cars:cars@127.0.0.1:1/cars");
-  const app = createApp({ store: createPgCarsStore(pool) });
+describe("an unreachable database", () => {
+  // localhost can fail with an AggregateError (IPv6 and IPv4), 127.0.0.1 with a plain error
+  for (const host of ["127.0.0.1", "localhost"]) {
+    test(`the store rejects with DatabaseUnavailableError (${host})`, async () => {
+      const pool = createPool(`postgres://cars:cars@${host}:1/cars`);
 
-  const res = await request(app).get("/api/cars");
+      try {
+        await assert.rejects(createPgCarsStore(pool).list(), DatabaseUnavailableError);
+      } finally {
+        await pool.end();
+      }
+    });
+  }
 
-  assert.equal(res.status, 500);
-  assert.deepEqual(res.body, { message: "Internal server error" });
-  await pool.end();
+  // a pool whose queries fail with err, for outages that are hard to cause for real
+  const failingPool = (err) => ({
+    async query() {
+      throw err;
+    },
+  });
+  const pgError = (message, code) => Object.assign(new Error(message), { code });
+
+  for (const err of [
+    pgError("terminating connection due to administrator command", "57P01"),
+    pgError("the database system is starting up", "57P03"),
+    pgError("connection failure", "08006"),
+    new Error("timeout exceeded when trying to connect"),
+    new Error("Connection terminated unexpectedly"),
+  ]) {
+    test(`"${err.message}" counts as an outage`, async () => {
+      await assert.rejects(createPgCarsStore(failingPool(err)).get(1), DatabaseUnavailableError);
+    });
+  }
+
+  test("other database errors are passed on unchanged", async () => {
+    const err = pgError('relation "cars" does not exist', "42P01");
+
+    await assert.rejects(createPgCarsStore(failingPool(err)).get(1), (thrown) => thrown === err);
+  });
+
+  test("a request gives 503", async () => {
+    const pool = createPool("postgres://cars:cars@127.0.0.1:1/cars");
+    const app = createApp({ store: createPgCarsStore(pool) });
+
+    const res = await request(app).get("/api/cars");
+
+    assert.equal(res.status, 503);
+    assert.deepEqual(res.body, { message: "Service unavailable" });
+    await pool.end();
+  });
+
+  test("GET /health gives 503", async () => {
+    const pool = createPool("postgres://cars:cars@127.0.0.1:1/cars");
+    const app = createApp({ store: createPgCarsStore(pool) });
+
+    const res = await request(app).get("/health");
+
+    assert.equal(res.status, 503);
+    await pool.end();
+  });
 });
 
 describe("postgres", () => {
@@ -158,6 +210,25 @@ describe("postgres", () => {
       assert.deepEqual(replaced.body, { id: car.id, make: "Honda", model: "Civic", year: 2021 });
       assert.equal(deleted.status, 204);
       assert.equal(afterDelete.status, 404);
+    });
+
+    test("a database error that is not an outage gives 500", async () => {
+      // a schema without tables: the query fails with "relation cars does not exist"
+      await pool.query("CREATE SCHEMA IF NOT EXISTS not_migrated");
+      const unmigrated = new Pool({
+        connectionString: process.env.TEST_DATABASE_URL,
+        options: "-c search_path=not_migrated",
+      });
+      const app = createApp({ store: createPgCarsStore(unmigrated) });
+
+      try {
+        const res = await request(app).get("/api/cars");
+
+        assert.equal(res.status, 500);
+        assert.deepEqual(res.body, { message: "Internal server error" });
+      } finally {
+        await unmigrated.end();
+      }
     });
   });
 

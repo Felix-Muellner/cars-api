@@ -1,11 +1,17 @@
 const { createApp } = require("./app");
 const { createPool, checkDatabase } = require("./database");
 const { createPgCarsStore } = require("./pgCarsStore");
-
-const HOST = "127.0.0.1";
-const PORT = 3000;
+const { readConfig } = require("./config");
 
 async function start() {
+  let config;
+  try {
+    config = readConfig(process.env);
+  } catch (err) {
+    console.error(err.message);
+    process.exit(1);
+  }
+
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     console.error("DATABASE_URL is not set (see .env.example)");
@@ -22,8 +28,8 @@ async function start() {
   }
 
   const app = createApp({ store: createPgCarsStore(pool) });
-  const server = app.listen(PORT, HOST, () => {
-    console.log(`Server listening on http://${HOST}:${PORT}...`);
+  const server = app.listen(config.port, config.host, () => {
+    console.log(`Server listening on http://${config.host}:${config.port}...`);
   });
 
   // finish open requests, then close the database connections

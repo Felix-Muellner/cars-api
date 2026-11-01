@@ -3,6 +3,7 @@ const swaggerUi = require("swagger-ui-express");
 const openapiSpec = require("./openapi");
 const { createCarsStore, seedCars } = require("./carsStore");
 const { validateCarInput, parseCarId } = require("./validation");
+const { DatabaseUnavailableError } = require("./errors");
 
 function createApp({ store = createCarsStore(seedCars) } = {}) {
   const app = express();
@@ -69,6 +70,12 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *           minimum: 1886
    *           description: From 1886 to next year
    *           example: 2022
+   *     Health:
+   *       type: object
+   *       properties:
+   *         status:
+   *           type: string
+   *           example: ok
    *     Error:
    *       type: object
    *       properties:
@@ -158,6 +165,14 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *             $ref: '#/components/schemas/Error'
    *           example:
    *             message: Car not found
+   *     ServiceUnavailable:
+   *       description: The database is unreachable; try again later
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/Error'
+   *           example:
+   *             message: Service unavailable
    *     InternalError:
    *       description: Unexpected server error
    *       content:
@@ -186,6 +201,8 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *                 $ref: '#/components/schemas/Car'
    *       500:
    *         $ref: '#/components/responses/InternalError'
+   *       503:
+   *         $ref: '#/components/responses/ServiceUnavailable'
    */
   app.get('/api/cars', async (req, res) => {
     res.status(200).json(await store.list());
@@ -213,6 +230,8 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *         $ref: '#/components/responses/CarNotFound'
    *       500:
    *         $ref: '#/components/responses/InternalError'
+   *       503:
+   *         $ref: '#/components/responses/ServiceUnavailable'
    */
   app.get('/api/cars/:id', async (req, res) => {
       const carId = parseCarId(req.params.id);
@@ -264,6 +283,8 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *         $ref: '#/components/responses/InvalidCar'
    *       500:
    *         $ref: '#/components/responses/InternalError'
+   *       503:
+   *         $ref: '#/components/responses/ServiceUnavailable'
    */
   app.post('/api/cars', async (req, res) => {
       const { car, errors } = validateCarInput(req.body);
@@ -332,6 +353,8 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *               message: Car not found
    *       500:
    *         $ref: '#/components/responses/InternalError'
+   *       503:
+   *         $ref: '#/components/responses/ServiceUnavailable'
    */
   app.put('/api/cars/:id', async (req, res) => {
       const carId = parseCarId(req.params.id);
@@ -375,6 +398,8 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *         $ref: '#/components/responses/CarNotFound'
    *       500:
    *         $ref: '#/components/responses/InternalError'
+   *       503:
+   *         $ref: '#/components/responses/ServiceUnavailable'
    */
   app.delete('/api/cars/:id', async (req, res) => {
       const carId = parseCarId(req.params.id);
@@ -388,6 +413,36 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
 
       res.status(204).send();
   })
+
+  /**
+   * @openapi
+   * /health:
+   *   get:
+   *     tags: [Health]
+   *     operationId: getHealth
+   *     summary: Check that the API can reach its database
+   *     responses:
+   *       200:
+   *         description: The API can serve requests
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Health'
+   *             example:
+   *               status: ok
+   *       503:
+   *         $ref: '#/components/responses/ServiceUnavailable'
+   */
+  app.get("/health", async (req, res) => {
+      try {
+          await store.ping();
+      } catch (err) {
+          console.error("Health check failed:", err.message);
+          return res.status(503).json({ message: "Service unavailable" });
+      }
+
+      res.status(200).json({ status: "ok" });
+  });
 
   app.use((req, res) => {
       res.status(404).json({ message: "Not found" });
@@ -404,6 +459,11 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
       // client errors raised by express.json(), e.g. 413 payload too large
       if (err.status >= 400 && err.status < 500) {
           return res.status(err.status).json({ message: err.message });
+      }
+
+      if (err instanceof DatabaseUnavailableError) {
+          console.error(`${err.message}: ${err.cause?.message}`);
+          return res.status(503).json({ message: "Service unavailable" });
       }
 
       console.error(err);
