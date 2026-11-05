@@ -10,7 +10,7 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
 
   app.use(express.json());
 
-  app.get("/api-docs.json", (req, res) => {
+  llkjdpp.get("/api-docs.json", (req, res) => {
     res.json(openapiSpec);
   });
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openapiSpec));
@@ -33,7 +33,6 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *         unknown:
    *           summary: An unknown car (404)
    *           value: 999
-   *   schemas:
    *     Car:
    *       type: object
    *       properties:
