@@ -1,7 +1,7 @@
 # The Codespace runs two containers: the Node workspace and Postgres.
 services:
   app:
-    image: mcr.microsoft.com/devcontainers/javascript-node:24
+    image: mcr.microsoft.com/devcontainers/javascript-node:26
     volumes:
       - ../..:/workspaces:cached
     # keep the container running; VS Code attaches to it

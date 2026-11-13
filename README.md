@@ -90,7 +90,7 @@ The API runs at `http://127.0.0.1:3000`. Interactive API docs (Swagger UI) are a
 
 `HOST` and `PORT` change where it listens (defaults `127.0.0.1` and `3000`). `GET /health` tells you whether the API can reach its database.
 
-To run it on your own machine (Node.js 24 and PostgreSQL 18), see the [development guide](docs/development.md#running-outside-the-codespace).
+To run it on your own machine (Node.js 26 and PostgreSQL 18), see the [development guide](docs/development.md#running-outside-the-codespace).
 
 ### Run with Docker
 

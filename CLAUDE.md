@@ -1,7 +1,7 @@
 # Cars API
 
 Node.js + Express 5 REST API for car inventory (CommonJS).
-Requires Node 24+ (CI and the devcontainer use Node 24, the current LTS).
+Requires Node 26+ (CI, the devcontainer and the Docker image use Node 26, the current LTS).
 Domain terms and rules: read CONTEXT.md before changing behavior.
 Data is stored in PostgreSQL 18; the devcontainer and CI provide it
 and set `DATABASE_URL` and `TEST_DATABASE_URL` (see .env.example).

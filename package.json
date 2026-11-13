@@ -22,7 +22,7 @@
   "license": "MIT",
   "type": "commonjs",
   "engines": {
-    "node": ">=24"
+    "node": ">=26"
   },
   "bugs": {
     "url": "https://github.com/Felix-Muellner/cars-api/issues"
