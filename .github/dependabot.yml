@@ -31,6 +31,10 @@ updates:
       interval: weekly
     commit-message:
       prefix: chore
+    ignore:
+      # stay on the Node major that CI and the devcontainer test (24)
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: devcontainers
     directory: /

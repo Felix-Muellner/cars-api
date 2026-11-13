@@ -67,14 +67,14 @@ Because the environment is ephemeral and fully described by the devcontainer, ev
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/cars` | Retrieve all cars | `200 OK` |
 | `GET` | `/api/cars/:id` | Retrieve a specific car by ID | `200 OK` / `400 Bad Request` / `404 Not Found` |
-| `POST` | `/api/cars` | Add a new car | `201 Created` / `400 Bad Request` |
-| `PUT` | `/api/cars/:id` | Update an existing car | `200 OK` / `400 Bad Request` / `404 Not Found` |
+| `POST` | `/api/cars` | Add a new car | `201 Created` / `400 Bad Request` / `413 Content Too Large` |
+| `PUT` | `/api/cars/:id` | Update an existing car | `200 OK` / `400 Bad Request` / `404 Not Found` / `413 Content Too Large` |
 | `DELETE` | `/api/cars/:id` | Remove a car by ID | `204 No Content` / `400 Bad Request` / `404 Not Found` |
 | `GET` | `/health` | Check that the API can reach its database | `200 OK` / `503 Service Unavailable` |
 
-A car is `{ id, make, model, year }`. `make` and `model` must be non-empty and at most 100 characters (after trimming spaces), and `year` must be a whole number from 1886 to next year. Ids are assigned by the server, never reused, and may have gaps. Cars are stored in PostgreSQL and survive restarts.
+A car is `{ id, make, model, year }`. `make` and `model` must be non-empty and at most 100 characters (after trimming spaces), and `year` must be a whole number from 1886 to next year. Ids are assigned by the server, never reused, and may have gaps; an id in the URL must be an integer from 1 to 2147483647 (otherwise `400`). Cars are stored in PostgreSQL and survive restarts.
 
-Every error response has a JSON body `{ "message": string }`. Validation failures also include `errors: string[]`. A body that is not valid JSON returns `400` with `"Invalid JSON"`, an unknown route returns `404` with `"Not found"`, an unreachable database returns `503` with `"Service unavailable"` (try again later), and any other unexpected server error returns `500` with `"Internal server error"`, without a stack trace.
+Every error response has a JSON body `{ "message": string }`. Validation failures also include `errors: string[]`. A body that is not valid JSON returns `400` with `"Invalid JSON"`, a body larger than 100 KB returns `413`, an unknown route returns `404` with `"Not found"`, an unreachable database returns `503` with `"Service unavailable"` (try again later), and any other unexpected server error returns `500` with `"Internal server error"`, without a stack trace.
 
 ## ⚙️ Getting Started
 

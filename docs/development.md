@@ -130,7 +130,8 @@ Codespace, in CI, or on a server. Hosting companies usually expect an image.
    from the Codespace's `cars` database).
 3. When `db` is healthy, runs `migrate` once: it applies the migrations and
    adds the two example cars to an empty table, then exits.
-4. Starts `api` and checks `/health` every 5 seconds.
+4. Starts `api` and checks `/health` every 5 seconds. Port 3000 is
+   published on `127.0.0.1` only, because the API has no login.
 
 Useful commands:
 

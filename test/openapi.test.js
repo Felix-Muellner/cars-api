@@ -40,6 +40,25 @@ describe("5xx responses", () => {
   });
 });
 
+describe("413 responses", () => {
+  test("POST and PUT document 413 for a body that is too large", async () => {
+    const res = await request(createApp()).get("/api-docs.json");
+
+    assert.ok(res.body.paths["/api/cars"].post.responses["413"]);
+    assert.ok(res.body.paths["/api/cars/{id}"].put.responses["413"]);
+  });
+
+  test("the API answers 413 for a body over 100 KB", async () => {
+    const res = await request(createApp())
+      .post("/api/cars")
+      .set("Content-Type", "application/json")
+      .send(JSON.stringify({ make: "a".repeat(200000) }));
+
+    assert.equal(res.status, 413);
+    assert.deepEqual(res.body, { message: "request entity too large" });
+  });
+});
+
 describe("request examples", () => {
   test("the ModelTooLong example is rejected for its length", async () => {
     const res = await request(createApp()).get("/api-docs.json");

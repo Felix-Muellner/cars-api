@@ -39,8 +39,10 @@ OpenAPI schemas and examples, and the README.
   UTF-16 units (an emoji is one character). Too long gives 400
   "Invalid car" with e.g. "make must be at most 100 characters".
 - `year` must be a whole number from 1886 to next year.
-- A car id in the URL must be a positive integer, otherwise 400
-  "Invalid car id".
+- A car id in the URL must be an integer from 1 to 2147483647 (the
+  largest Postgres `integer`), otherwise 400 "Invalid car id".
+- A request body larger than 100 KB gives 413
+  "request entity too large" (from express.json()).
 - PUT replaces all of make, model and year (no partial updates).
   Order of checks: bad id 400, unknown id 404, bad body 400.
 - A body that is not valid JSON gives 400 "Invalid JSON". An unknown

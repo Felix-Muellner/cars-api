@@ -1,6 +1,6 @@
 # The image that runs the API: Node.js 24, production dependencies only,
 # started as the unprivileged "node" user. compose.yaml shows how to run it.
-FROM node:26-slim
+FROM node:24-slim
 
 WORKDIR /app
 ENV NODE_ENV=production
