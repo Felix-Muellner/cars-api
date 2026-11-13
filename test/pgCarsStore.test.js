@@ -212,6 +212,16 @@ describe("postgres", () => {
       assert.equal(afterDelete.status, 404);
     });
 
+    test("ids at and above the largest Postgres integer give 404 and 400, not 500", async () => {
+      const app = createApp({ store: createPgCarsStore(pool) });
+
+      const largest = await request(app).get("/api/cars/2147483647");
+      const tooLarge = await request(app).get("/api/cars/2147483648");
+
+      assert.equal(largest.status, 404);
+      assert.equal(tooLarge.status, 400);
+    });
+
     test("a database error that is not an outage gives 500", async () => {
       // a schema without tables: the query fails with "relation cars does not exist"
       await pool.query("CREATE SCHEMA IF NOT EXISTS not_migrated");

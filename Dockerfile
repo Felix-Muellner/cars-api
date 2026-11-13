@@ -1,4 +1,4 @@
-# The image that runs the API: Node.js 24, production dependencies only,
+# The image that runs the API: Node.js 26, production dependencies only,
 # started as the unprivileged "node" user. compose.yaml shows how to run it.
 FROM node:26-slim
 

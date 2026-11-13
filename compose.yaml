@@ -34,7 +34,8 @@ services:
     build: .
     image: cars-api
     ports:
-      - "3000:3000"
+      # only this computer can reach it: the API has no authentication
+      - "127.0.0.1:3000:3000"
     environment:
       DATABASE_URL: postgres://cars:cars@db:5432/cars
     depends_on:

@@ -23,9 +23,11 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *       name: id
    *       in: path
    *       required: true
-   *       description: Positive integer car id
+   *       description: Car id, an integer from 1 to 2147483647
    *       schema:
    *         type: integer
+   *         minimum: 1
+   *         maximum: 2147483647
    *       examples:
    *         existing:
    *           summary: An existing car
@@ -123,7 +125,7 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *         model: Mustang GT Fastback Premium Convertible with the California Special Package and the Performance Pack Level 2
    *         year: 2022
    *     InvalidCarIdError:
-   *       summary: The id is not a positive integer
+   *       summary: The id is not an integer from 1 to 2147483647
    *       value:
    *         message: Invalid car id
    *     InvalidJsonError:
@@ -139,7 +141,7 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *           - year must be an integer from 1886 to next year
    *   responses:
    *     InvalidCarId:
-   *       description: The id is not a positive integer
+   *       description: The id is not an integer from 1 to 2147483647
    *       content:
    *         application/json:
    *           schema:
@@ -165,6 +167,14 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *             $ref: '#/components/schemas/Error'
    *           example:
    *             message: Car not found
+   *     PayloadTooLarge:
+   *       description: The body is larger than 100 KB
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/Error'
+   *           example:
+   *             message: request entity too large
    *     ServiceUnavailable:
    *       description: The database is unreachable; try again later
    *       content:
@@ -281,6 +291,8 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *               $ref: '#/components/schemas/Car'
    *       400:
    *         $ref: '#/components/responses/InvalidCar'
+   *       413:
+   *         $ref: '#/components/responses/PayloadTooLarge'
    *       500:
    *         $ref: '#/components/responses/InternalError'
    *       503:
@@ -331,7 +343,7 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *             schema:
    *               $ref: '#/components/schemas/Car'
    *       400:
-   *         description: The id is not a positive integer (message "Invalid car id"), the body is not valid JSON (message "Invalid JSON"), or the body is invalid (message "Invalid car" with errors)
+   *         description: The id is not an integer from 1 to 2147483647 (message "Invalid car id"), the body is not valid JSON (message "Invalid JSON"), or the body is invalid (message "Invalid car" with errors)
    *         content:
    *           application/json:
    *             schema:
@@ -351,6 +363,8 @@ function createApp({ store = createCarsStore(seedCars) } = {}) {
    *               $ref: '#/components/schemas/Error'
    *             example:
    *               message: Car not found
+   *       413:
+   *         $ref: '#/components/responses/PayloadTooLarge'
    *       500:
    *         $ref: '#/components/responses/InternalError'
    *       503:

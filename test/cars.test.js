@@ -38,6 +38,23 @@ describe("GET /api/cars/:id", () => {
     assert.equal(res.status, 404);
     assert.deepEqual(res.body, { message: "Car not found" });
   });
+
+  test("returns 404 for the largest valid id", async () => {
+    const res = await request(createApp()).get("/api/cars/2147483647");
+
+    assert.equal(res.status, 404);
+  });
+});
+
+describe("ids above 2147483647 (the largest Postgres integer)", () => {
+  for (const method of ["get", "put", "delete"]) {
+    test(`${method.toUpperCase()} returns 400`, async () => {
+      const res = await request(createApp())[method]("/api/cars/2147483648").send(validCar);
+
+      assert.equal(res.status, 400);
+      assert.deepEqual(res.body, { message: "Invalid car id" });
+    });
+  }
 });
 
 describe("POST /api/cars", () => {

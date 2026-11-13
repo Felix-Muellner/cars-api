@@ -1,5 +1,8 @@
 const MIN_YEAR = 1886;
 const MAX_TEXT_LENGTH = 100;
+// the largest value of the Postgres integer id column; larger ids would make
+// Postgres reject the query (500) instead of answering 404
+const MAX_CAR_ID = 2147483647;
 
 function isNonEmptyString(value) {
   return typeof value === "string" && value.trim() !== "";
@@ -37,9 +40,9 @@ function validateCarInput(body) {
   return { car: { make: make.trim(), model: model.trim(), year }, errors };
 }
 
-// returns the id as a number, or undefined if raw is not a positive integer
+// returns the id as a number, or undefined if raw is not an integer from 1 to MAX_CAR_ID
 function parseCarId(raw) {
-  if (!/^[1-9]\d*$/.test(raw)) {
+  if (!/^[1-9]\d*$/.test(raw) || Number(raw) > MAX_CAR_ID) {
     return undefined;
   }
 

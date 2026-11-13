@@ -10,7 +10,7 @@ runs two containers with Docker Compose:
 
 | Container | What it runs |
 | :--- | :--- |
-| `app` | The workspace: Node.js 24, npm, GitHub CLI, Claude Code. You and the API run here. |
+| `app` | The workspace: Node.js 26, npm, GitHub CLI, Claude Code. You and the API run here. |
 | `postgres` | PostgreSQL 18 (`postgres:18` image) with two databases: `cars` and `cars_test`. |
 
 When the Codespace starts, it runs `npm run migrate && npm run db:seed`, so
@@ -90,7 +90,7 @@ If Postgres is not running, only the Postgres tests fail, with one message:
 
 ## Running outside the Codespace
 
-You need Node.js 24 and a PostgreSQL 18 server. With Docker, for example:
+You need Node.js 26 and a PostgreSQL 18 server. With Docker, for example:
 
 ```bash
 docker run -d --name cars-postgres -p 5432:5432 \
@@ -110,7 +110,7 @@ npm start
 
 ### Image and container, in short
 
-- An **image** is a packaged copy of the app: Node.js 24, the code and the
+- An **image** is a packaged copy of the app: Node.js 26, the code and the
   npm packages it needs, built from the recipe in
   [`Dockerfile`](../Dockerfile). It never changes once built.
 - A **container** is a running copy of an image. You can start several
@@ -130,7 +130,8 @@ Codespace, in CI, or on a server. Hosting companies usually expect an image.
    from the Codespace's `cars` database).
 3. When `db` is healthy, runs `migrate` once: it applies the migrations and
    adds the two example cars to an empty table, then exits.
-4. Starts `api` and checks `/health` every 5 seconds.
+4. Starts `api` and checks `/health` every 5 seconds. Port 3000 is
+   published on `127.0.0.1` only, because the API has no login.
 
 Useful commands:
 
