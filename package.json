@@ -1,6 +1,6 @@
 {
   "name": "cars",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A lightweight RESTful API for managing car inventory data, built with Node.js and Express.",
   "main": "src/server.js",
   "scripts": {

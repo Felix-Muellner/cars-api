@@ -1,11 +1,13 @@
 const swaggerJsdoc = require("swagger-jsdoc");
+// the API version is the package version, so the two never drift apart
+const { version } = require("../package.json");
 
 const options = {
   definition: {
     openapi: "3.0.0",
     info: {
       title: "Cars API",
-      version: "1.0.0",
+      version,
       description:
         "A lightweight RESTful API for managing car inventory data.",
       license: { name: "MIT", url: "https://opensource.org/licenses/MIT" },
