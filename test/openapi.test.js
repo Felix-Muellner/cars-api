@@ -11,6 +11,12 @@ describe("GET /api-docs.json", () => {
     assert.equal(res.body.openapi, "3.0.0");
   });
 
+  test("shows the version from package.json", async () => {
+    const res = await request(createApp()).get("/api-docs.json");
+
+    assert.equal(res.body.info.version, require("../package.json").version);
+  });
+
   test("documents every operation with an operationId", async () => {
     const res = await request(createApp()).get("/api-docs.json");
 
