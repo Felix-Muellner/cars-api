@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@redocly/cli": "2.76.0",
+    "@redocly/cli": "2.77.0",
     "eslint": "^10.14.0",
     "globals": "^17.14.0",
     "supertest": "^7.3.2"
